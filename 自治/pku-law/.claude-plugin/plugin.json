@@ -1,0 +1,9 @@
+{
+  "name": "pku-law",
+  "version": "1.0.4",
+  "description": "北大法宝（PKU Law）MCP 服务器与法律技能集合：法律法规检索、案例检索、条文定位、引用校验等中国法律数据服务。",
+  "author": {
+    "name": "liantian"
+  },
+  "license": "MIT"
+}
