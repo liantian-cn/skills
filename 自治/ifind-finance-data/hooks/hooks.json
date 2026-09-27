@@ -1,0 +1,17 @@
+{
+  "description": "SessionStart hook that warns when IFIND_API_KEY is not configured.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/hooks/check_env.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

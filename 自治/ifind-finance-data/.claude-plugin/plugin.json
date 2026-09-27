@@ -1,0 +1,12 @@
+{
+  "name": "ifind-finance-data",
+  "version": "1.2.13",
+  "description": "同花顺金融数据查询插件，通过 iFinD MCP API 提供股票、基金、宏观经济、行业经济、新闻公告、债券、港美股及指数板块数据查询服务，支持智能选股、选基、宏观行业经济指标查询、金融公告资讯搜索等功能。",
+  "author": {
+    "name": "iFinD"
+  },
+  "license": "MIT",
+  "homepage": "https://www.51ifind.com",
+  "repository": "https://github.com/liantian-cn/cc-marketplace/tree/main/finance-plugins/ifind-finance-data",
+  "category": "金融数据"
+}
