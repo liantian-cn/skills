@@ -1,0 +1,13 @@
+# Plugin local settings (per-user configuration)
+.claude/*.local.md
+
+# MCP query result cache
+*/MCP查询结果/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# OS files
+.DS_Store
+Thumbs.db
