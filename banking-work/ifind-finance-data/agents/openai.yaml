@@ -1,0 +1,6 @@
+interface:
+  display_name: "同花顺 iFinD 金融数据"
+  short_description: "通过 TypeScript 查询宏观、股票、基金、债券及新闻公告数据"
+  default_prompt: "使用 $ifind-finance-data 查询所需金融数据，并注明数据日期与来源。"
+policy:
+  allow_implicit_invocation: true
