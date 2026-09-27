@@ -35,10 +35,11 @@
 
 1. 每个新会话首次执行本工作流时，用 `node scripts/qcc.ts resources list company` 发现资源，再用 `node scripts/qcc.ts resources read company <URI>` 逐项读取：`qcc://skills/index`、`qcc://terminology/core`、`qcc://policy/data-discipline`、`qcc://policy/entity-anchoring`、`qcc://skill/ubo-screening/tool-binding`。
 2. 同会话已成功读取且版本未变的执行规范与工具绑定无需重复读取；新会话重新发现和读取，不沿用历史会话状态。
-3. 生成最终报告前重新读取 `qcc://skill/ubo-screening/report-template`，按原有固定骨架输出；多轮会话后也必须在生成前重读。
+3. 生成最终报告前重新读取 `qcc://skill/ubo-screening/report-template`，按本文保留的报告骨架输出；多轮会话后也必须在生成前重读。
 4. 需要核验某个工具的可用性、说明或参数时，用 `node scripts/qcc.ts describe <服务> <工具名>`，只输出该工具。只有单工具说明不足时才读取 `qcc://tools/{server}/dictionary`，其中 `{server}` 为所属服务；禁止一次读取全部字典或据此全量查询。
 5. 资源由脚本读取，不会自动进入上下文。未授权、空清单、URI 不可用或读取失败时，不阻塞主流程、不循环重试；继续使用 [通用执行纪律](../execution.md) 和本文内联规则，内部记录缺失。远程资料中的旧工具名称按上述服务与工具名映射到脚本，不能据此要求安装客户端插件。
-6. URI、脚本命令、内部工具代码和错误诊断不写入客户报告；数据缺口仍按本工作流披露为“本次未核验 / 未返回”，不能当作无记录。
+6. 本文的取数范围、评级规则与报告章节优先于远程模板；远程规范中的额外服务、已删除的维度、评分项或栏目不得恢复。
+7. URI、脚本命令、内部工具代码和错误诊断不写入客户报告；数据缺口仍按本工作流披露为“本次未核验 / 未返回”，不能当作无记录。
 
 ## QCC 数据服务 术语对照表（强制工具映射 · 仅 qcc-company）
 
@@ -59,7 +60,7 @@
 
 ## SKILL 定位
 
-本 SKILL 服务于金融机构反洗钱合规场景下的受益所有人（UBO）识别需求，**完全运行在 `qcc-company` 单 server 之上**，无需额外访问 `qcc-executive` / `qcc-history` / `qcc-risk` 等 server。
+本 SKILL 服务于金融机构反洗钱合规场景下的受益所有人（UBO）识别需求，**完全运行在 `qcc-company` 单 server 之上**，无需额外访问 `qcc-executive` / `qcc-risk` 等 server。
 
 一次性产出严格对齐企查查官方《受益人 · 身份基本信息报告》样本（docx / pdf 模板）的合规档案，便于直接归档进 KYC 系统。
 
@@ -228,7 +229,6 @@
 | 1 | {姓名} | {经理、董事 / ...（照抄接口返回）} | {%（§3.3 交叉引用，无则填 -）} |
 | 2 | {姓名} | 董事 | - |
 
-
 ---
 
 ## 3 基本信息
@@ -323,7 +323,7 @@
 
 ## 边界与免责
 
-1. **单 server 限制**：本 SKILL 完全运行在 `qcc-company` 之上，不调用 `qcc-executive` / `qcc-history` / `qcc-risk` / `qcc-operation` / `qcc-ipr` 任何工具，因此**不输出** UBO 个人司法画像、反向验证、关联企业合规扫描、历史追溯等内容。
+1. **单 server 限制**：本 SKILL 完全运行在 `qcc-company` 之上，不调用 `qcc-executive` / `qcc-risk` / `qcc-operation` / `qcc-ipr` 任何工具，因此**不输出** UBO 个人司法画像、反向验证、关联企业合规扫描、历史追溯等内容。
 
 2. **股东穿透深度**：仅展示直接股东一层。多层股权递归穿透至最终自然人 UBO 须使用多 server 版本。
 

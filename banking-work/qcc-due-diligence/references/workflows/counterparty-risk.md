@@ -3,7 +3,7 @@
 贸易融资、信用证业务、应收账款保理、远期结售汇等场景的交易对手多维风险评估工具。综合企业进出口信用等级、行政处罚记录、失信被执行情况、经营异常信息，叠加法代与实控人个人风险，输出交易对手综合风险评分，帮助贸易金融团队在开证、议付、贴现等关键节点识别潜在违约风险。
 
 核心能力：
-- 多维度交易对手画像：7 大评估维度（工商 + 财务 + 司法 + 经营 + 人员 + 历史 + 关联）
+- 多维度交易对手画像：工商、财务、司法、经营、人员、工商变更与关联关系评估
 - 进出口信用评级：`operation/get_import_export_credit`（高级认证 / 一般认证等级识别）
 - 贸易真实性辅助判定：业务范围匹配度 + 经营活跃度（招投标 / 招聘）+ 上下游关联企业
 - 法代与实控人个人风险：限出境 + 失信 + 限高对贸易金融尤为重要
@@ -30,10 +30,11 @@
 
 1. 每个新会话首次执行本工作流时，用 `node scripts/qcc.ts resources list company` 发现资源，再用 `node scripts/qcc.ts resources read company <URI>` 逐项读取：`qcc://skills/index`、`qcc://terminology/core`、`qcc://policy/data-discipline`、`qcc://policy/entity-anchoring`、`qcc://skill/counterparty-risk/tool-binding`。
 2. 同会话已成功读取且版本未变的执行规范与工具绑定无需重复读取；新会话重新发现和读取，不沿用历史会话状态。
-3. 生成最终报告前重新读取 `qcc://skill/counterparty-risk/report-template`，按原有固定骨架输出；多轮会话后也必须在生成前重读。
+3. 生成最终报告前重新读取 `qcc://skill/counterparty-risk/report-template`，按本文保留的报告骨架输出；多轮会话后也必须在生成前重读。
 4. 需要核验某个工具的可用性、说明或参数时，用 `node scripts/qcc.ts describe <服务> <工具名>`，只输出该工具。只有单工具说明不足时才读取 `qcc://tools/{server}/dictionary`，其中 `{server}` 为所属服务；禁止一次读取全部字典或据此全量查询。
 5. 资源由脚本读取，不会自动进入上下文。未授权、空清单、URI 不可用或读取失败时，不阻塞主流程、不循环重试；继续使用 [通用执行纪律](../execution.md) 和本文内联规则，内部记录缺失。远程资料中的旧工具名称按上述服务与工具名映射到脚本，不能据此要求安装客户端插件。
-6. URI、脚本命令、内部工具代码和错误诊断不写入客户报告；数据缺口仍按本工作流披露为“本次未核验 / 未返回”，不能当作无记录。
+6. 本文的取数范围、评级规则与报告章节优先于远程模板；远程规范中的额外服务、已删除的维度、评分项或栏目不得恢复。
+7. URI、脚本命令、内部工具代码和错误诊断不写入客户报告；数据缺口仍按本工作流披露为“本次未核验 / 未返回”，不能当作无记录。
 
 ## 🔍 风险维度扫描 · 先扫后钻（统一规范）
 
@@ -51,7 +52,7 @@
 >
 > 9. **【持股平台必下钻 · 防“换壳误判退出”】** 当历史 / 工商变更 / 股东结构出现“**大股东退出 + 新持股平台（有限合伙 / 投资中心 / 企业管理中心等）进入**”时，**必须**对该新进平台下钻 `company/get_shareholder_info`（看其合伙人 / 股东）、必要时再 `company/get_actual_controller`，判定是“换壳不换人（同一最终控制方的持股形式变更）”还是“真实控制权转移 / 真退出”，再给治理稳定性 / 退出 / 估值结论。禁止仅凭“某股东从直接持股列表消失”就定性为“退出 / 重要股东离场 / 估值倒挂”，也禁止凭印象断言“系关联方形式变更”——两个方向都必须由下钻数据支撑。例：万得信息技术 2024-07 退出企查查直接股东、上海荷花缘（有限合伙）进入 → 下钻荷花缘合伙人发现万得持其 99% LP 且 100% 控其 GP（上海万兴）→ 应判“控制权未转移、由直接转为间接持股形式变更”，不计退出 / 估值倒挂风险。
 >
-> 📌 **year 留空拿全量 · 禁逐年循环（防 year 散弹枪）**：立案 / 裁判文书 / 开庭公告 / 法院公告等带 `year` 过滤参数的诉讼类工具，**取全量时 `year` 一律留空——接口在 year 缺省时即一次返回全部年份**；**严禁为“覆盖多年”而逐年（2024、2023 … 直至成立年）循环调用同一工具**（实测曾逐年一直调到 1976、单次运行 60+ 次冗余调用）。需要按年做趋势分桶时，基于“留空一次拿回的全量列表”在报告侧自行分桶；`role` / `notice_type` 等其他过滤参数同理，取全量时留空；仅当明确限定某一年 / 区间时才传 `year`。qcc-history / qcc-executive 的同名历史 / 个人诉讼工具同理，不逐年循环。
+> 📌 **year 留空拿全量 · 禁逐年循环（防 year 散弹枪）**：立案 / 裁判文书 / 开庭公告 / 法院公告等带 `year` 过滤参数的诉讼类工具，**取全量时 `year` 一律留空——接口在 year 缺省时即一次返回全部年份**；**严禁为“覆盖多年”而逐年（2024、2023 … 直至成立年）循环调用同一工具**（实测曾逐年一直调到 1976、单次运行 60+ 次冗余调用）。需要按年做趋势分桶时，基于“留空一次拿回的全量列表”在报告侧自行分桶；`role` / `notice_type` 等其他过滤参数同理，取全量时留空；仅当明确限定某一年 / 区间时才传 `year`。qcc-executive 的同名历史 / 个人诉讼工具同理，不逐年循环。
 
 ## 📖 QCC 数据服务 术语对照表（强制工具映射）
 
@@ -87,7 +88,7 @@
 
 - **法代与实控人个人风险**：贸易金融业务的跨境属性使得"实控人限制出境"这类信号比企业层风险更关键——企业再大，如果实控人跑路，单据背后的付款承诺将难以兑现
 - **进出口信用等级**：qcc-operation 的 `operation/get_import_export_credit` 提供海关信用等级（高级认证 / 一般认证 / 失信企业），直接对应进出口业务的通关便利与履约信用
-- **核心人员历史变迁**：通过 qcc-history 的历届法代与历史高管追溯，识别交易对手是否处于"长期稳定运营"还是"频繁变更 / 治理动荡"
+- **工商变更核查**：通过 `company/get_change_records` 核查已披露的法定代表人、股东等变更。
 
 ## 数据服务与授权
 
@@ -101,12 +102,7 @@
 - `qcc-operation`（经营数据，35 工具）—— **核心工具**：`operation/get_import_export_credit` 进出口信用 + 资质 + 招投标 + 招聘 + 双随机抽查
 - `qcc-executive`（人员画像，44 工具）—— 法代 + 实控人个人风险
 
-建议开通：
-- `qcc-history`（历史存档，34 工具）—— 历史治理稳定性
-
 无需安装客户端插件；脚本读取当前进程的 `QCC_API_KEY`。服务未授权时保留步骤并标注缺失。
-
-> 注：脚本已提供 `history` 历史服务入口；若当前密钥未获授权，目标企业自身的历届法定代表人 / 历史股东变迁等企业侧历史维度数据，由「工商变更记录」（`company/get_change_records`）提供。
 
 ## 通用执行原则
 
@@ -177,13 +173,9 @@
 - 实控人 / 法代有当前失信 → **D 级**
 - 实控人控制的其他贸易类企业存在"信用证欺诈 / 单据造假"司法记录 → 重点审查
 
-### 维度五：历史治理稳定性
+### 维度五：工商变更核查
 
-工具链：
-- `history/get_historical_legal_rep` —— 历届法代
-- `history/get_historical_shareholders` —— 历史股东
-- `history/get_historical_admin_license` —— 历史行政许可（进出口资质）
-- `history/get_historical_admin_penalty` —— 历史行政处罚
+通过 `company/get_change_records` 核查法定代表人、股东、资本与登记信息变更，仅报告实际返回的变更事实；不能据此声称企业全生命周期无风险。
 
 ### 维度六：关联企业与交易真实性
 
@@ -200,7 +192,7 @@
 | 评级 | 核心标准 | 风险信息参考（非业务决策） |
 |------|---------|------------|
 | **A 级** | 高级/一般认证 + 纳税 A 级 + 无当前司法风险 + 实控人清洁 + 治理稳定 | 较低风险信号，供客户业务系统评估 |
-| **B 级** | 一般认证或一般信用 + 无致命风险 + 历史有已修复事件 | 存在可解释的历史风险信号，建议核对修复材料 |
+| **B 级** | 一般认证或一般信用 + 无致命风险 | 依据当前已核验维度列明一般关注项 |
 | **C 级** | 一般信用 + 处罚经确定性规则评为较高影响，或法代近期变更等当前风险信号 | 较高风险信号，建议补充核验相关明细与材料 |
 | **D 级** | 失信企业 或 当前重大司法风险 或 实控人限制出境 / 失信 | 高风险事实，提交客户业务系统按自身规则处理 |
 
@@ -211,6 +203,8 @@
 | < 100 万 | A/B/C 级均可，D 级拒绝 |
 | 100-1,000 万 | A/B 级可受理，C 级需担保，D 级拒绝 |
 | > 1,000 万 | 仅 A 级可标准受理，B 级需担保，C/D 级拒绝 |
+
+**评价范围**：仅按本文保留的维度与规则评估，不给已删除项目记零分，也不将其分值或权重分摊到其他项目。其他阈值保持原值。报告固定披露：“本次评价覆盖范围已收窄，仅反映所列维度，不代表完整企业存续期风险评价。”
 
 ## 报告输出格式（严格填空骨架 · 模型只填值、不造结构）
 
@@ -233,6 +227,7 @@
 **法定代表人：** {姓名}
 **业务类型 / 本次敞口：** {进出口 / 贸易 / 跨境 / 国内} · {敞口金额 / 未指定}
 **报告生成：** YYYY-MM-DD HH:MM:SS
+**评价范围：** 本次评价覆盖范围已收窄，仅反映所列维度，不代表完整企业存续期风险评价。
 **审计留档编号：** CPR-{统一社会信用代码}-{YYYYMMDD}
 **评估结论：** {A / B / C / D} 级 · {正常受理 / 受理加审 / 谨慎受理 / 拒绝受理} · {一句话结论}
 
@@ -266,7 +261,7 @@
 | 工商 / 股权 / 实控 | 企查查工商登记数据（国家企业信用信息公示系统 T+0） | {二要素核验 / 与客户申报比对} |
 | 进出口信用 / 经营 | 企查查经营信息数据（海关 / 纳税信用等公示） | {等级逐字引用} |
 | 司法风险 / 担保 | 企查查风险信息数据 | {先扫后钻分诊 + 命中下钻} |
-| 财务 / 历史治理 | 企查查财务数据 / 历史存档数据 | {聚合值逐字引用 / 历届回溯} |
+| 财务 / 工商变更 | 企查查财务数据 / 工商变更记录 | {聚合值逐字引用 / 已披露变更核查} |
 
 ## 3 交易对手主体与工商基础
 
@@ -314,13 +309,11 @@
 | 净利润 | {} | {} | {} | 企查查财务数据 |
 | 资产负债率 | {} | — | — | 企查查财务数据 |
 
-
 ### 4.3 实际控制人与股东结构
 
 | 序号 | 股东 / 实控人 | 直接持股比例 | 总持股比例 | 表决权比例 | 类型 |
 | --- | --- | --- | --- | --- | --- |
 | 1 | {} | {%} | {%} | {53.0011%} | {自然人 / 企业法人 / 有限合伙} |
-
 
 ### 4.4 对外担保余额（表外或有负债）
 
@@ -328,7 +321,6 @@
 | --- | --- |
 | 对外担保笔数 / 金额 | {N 笔 · 金额 / 无} |
 | 担保关联方风险 | {关联方有无失信 / 被执行 —— 下钻确认} |
-
 
 ## 5 司法风险面与关联交易真实性
 
@@ -362,16 +354,11 @@
 
 > 对每位目标人先调个人风险扫描分诊，仅对命中维度下钻取明细。**任一方核心人员当前限制出境 / 失信 → 直接触发 D 级（否决）。**
 
-## 7 历史治理稳定性
+## 7 工商变更核查
 
-| 指标 | 本企业实测 | 是否触发关注 |
-| --- | --- | --- |
-| 历届法定代表人变更 | {N 次 / 近 N 年 N 次} | {是 / 否} |
-| 历史股东变迁 | {有退出 / 无} | {是 / 否} |
-| 历史行政许可（进出口资质） | {有 / 无} | — |
-| 历史行政处罚 | {N 条 / 无} | {是 / 否} |
-
-**治理稳定性结论：** {长期稳定 / 近期变更频繁需关注}。{如涉持股平台进退，写明下钻判定}
+| 变更日期 | 变更事项 | 变更前 | 变更后 | 核验说明 |
+| --- | --- | --- | --- | --- |
+| {} | {} | {} | {} | {仅依据已返回变更记录；持股平台进退须下钻核验} |
 
 ## 8 综合评级 × 敞口建议 × 单证审核要求
 
@@ -413,7 +400,7 @@
 4. 本报告基于公开工商 / 司法 / 经营 / 财务数据，无法识别未披露的代持、协议控制、一致行动安排，须结合客户访谈与关联交易审查综合判断。
 ```
 
-> **章节 ↔ 工具绑定**：执行摘要←全维度汇总；§3←`company/verify_company_accuracy` / `company/get_company_registration_info` / `company/get_shareholder_info` / `company/get_branches`；§4.1←`operation/get_import_export_credit` / `operation/get_qualifications` / `operation/get_credit_evaluation` / `operation/get_bidding_info` / `operation/get_recruitment_info` / `operation/get_random_check`；§4.2←`company/get_financial_data`；§4.3←`company/get_shareholder_info` / `company/get_actual_controller`（聚合值逐字引用）；§4.4←`risk/get_guarantee_info`；§5.1–5.2←`risk/get_company_risk_scan` 先扫 + 命中维度原子下钻（`risk/get_dishonest_info` / `risk/get_judgment_debtor_info` / `risk/get_high_consumption_restriction` / `risk/get_equity_freeze` / `risk/get_administrative_penalty` / `risk/get_terminated_cases`）；§5.3←`company/get_external_investments` + 实控人关联（单层预警）；§6←法代 / 实控人个人风险先扫后钻（`executive/get_executive_risk_scan` + 命中下钻 `executive/get_executive_exit_restriction` / `executive/get_executive_dishonest` / `executive/get_executive_high_consumption_ban` / `executive/get_executive_judgment_debtor`）；§7←`history/get_historical_legal_rep` / `history/get_historical_shareholders` / `history/get_historical_admin_license` / `history/get_historical_admin_penalty`；§8←全维度汇总 + 敞口分级。
+> **章节 ↔ 工具绑定**：执行摘要←全维度汇总；§3←`company/verify_company_accuracy` / `company/get_company_registration_info` / `company/get_shareholder_info` / `company/get_branches`；§4.1←`operation/get_import_export_credit` / `operation/get_qualifications` / `operation/get_credit_evaluation` / `operation/get_bidding_info` / `operation/get_recruitment_info` / `operation/get_random_check`；§4.2←`company/get_financial_data`；§4.3←`company/get_shareholder_info` / `company/get_actual_controller`（聚合值逐字引用）；§4.4←`risk/get_guarantee_info`；§5.1–5.2←`risk/get_company_risk_scan` 先扫 + 命中维度原子下钻（`risk/get_dishonest_info` / `risk/get_judgment_debtor_info` / `risk/get_high_consumption_restriction` / `risk/get_equity_freeze` / `risk/get_administrative_penalty` / `risk/get_terminated_cases`）；§5.3←`company/get_external_investments` + 实控人关联（单层预警）；§6←法代 / 实控人个人风险先扫后钻（`executive/get_executive_risk_scan` + 命中下钻 `executive/get_executive_exit_restriction` / `executive/get_executive_dishonest` / `executive/get_executive_high_consumption_ban` / `executive/get_executive_judgment_debtor`）；§7←`company/get_change_records`；§8←全维度汇总 + 敞口分级。
 
 ## 参数
 
