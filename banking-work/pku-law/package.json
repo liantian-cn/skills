@@ -1,0 +1,17 @@
+{
+  "name": "pku-law-skill",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --test scripts/pku-law.test.ts",
+    "test:live": "node scripts/smoke.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "typescript": "^7.0.2"
+  }
+}

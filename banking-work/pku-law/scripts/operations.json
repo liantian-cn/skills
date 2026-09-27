@@ -1,0 +1,495 @@
+{
+  "get_article": {
+    "endpoint": "/mcp-law-search-service",
+    "title": "获取法条内容",
+    "inputSchema": {
+      "properties": {
+        "title": {
+          "description": "法规标题（中文）",
+          "type": "string"
+        },
+        "number": {
+          "description": "法条序号（中文），如：第四十八条",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "number"
+      ],
+      "type": "object"
+    }
+  },
+  "search_article": {
+    "endpoint": "/mcp-law-search-service",
+    "title": "语义检索法条",
+    "inputSchema": {
+      "properties": {
+        "text": {
+          "description": "检索关键词或文本，用于语义检索法条。",
+          "type": "string"
+        },
+        "lib": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "法规库，可以为：中央, 地方。分别表示中央法规库和地方法规库。用于按照法规库进行筛选。"
+        },
+        "timeliness": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "时效性，可以为：现行有效, 废止或失效，部分废止或失效，已被修改，尚未施行。用于按照时效性进行筛选。"
+        },
+        "issue_department": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "制定机关全称，如：交通运输部。用于按照制定机关进行筛选。"
+        },
+        "implement_date_start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "施行日期起始，ISO 格式：YYYY-MM-DD。用于按照施行日期范围进行筛选。"
+        },
+        "implement_date_end": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "施行日期结束，ISO 格式：YYYY-MM-DD。用于按照施行日期范围进行筛选。"
+        },
+        "size": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 10,
+          "description": "返回结果数量，默认为10。最大不超过20，最小不小于1。"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object"
+    }
+  },
+  "get_law_list": {
+    "endpoint": "/mcp-law",
+    "title": "查询法规列表,返回前20条。如标题为刑法并且正文关键词为盗窃",
+    "inputSchema": {
+      "properties": {
+        "title": {
+          "default": "",
+          "description": "标题关键词，如刑法，标题关键词或正文关键词至少有一个不为空",
+          "title": "title",
+          "type": "string"
+        },
+        "startImplementDate": {
+          "default": "",
+          "description": "开始施行日期，法规的开始施行日期，如2024.1.1.",
+          "title": "startImplementDate",
+          "type": "string"
+        },
+        "endImplementDate": {
+          "default": "",
+          "description": "终止施行日期，法规的终止施行日期，如2024.1.1.",
+          "title": "endImplementDate",
+          "type": "string"
+        },
+        "timeliness": {
+          "description": "时效性，法规的时效状态，值为：现行有效,废止或失效,尚未施行,已被修改,部分废止或失效",
+          "items": {
+            "type": "string"
+          },
+          "title": "timeliness",
+          "type": "array"
+        },
+        "effectiveness": {
+          "description": "效力位阶，法律体系中的纵向等级关系，值为：法律,行政法规,监察法规,司法解释,部门规章,军事法规规章,党内法规制度,行业规定,团体规定,地方性法规,自治条例和单行条例,地方政府规章,地方规范性文件,地方司法文件,地方工作文件,行政许可批复",
+          "items": {
+            "type": "string"
+          },
+          "title": "effectiveness",
+          "type": "array"
+        },
+        "fulltext": {
+          "default": "",
+          "description": "正文关键词，如盗窃罪，标题关键词或正文关键词至少有一个不为空",
+          "title": "fulltext",
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "title": "get_law_listArguments"
+    }
+  },
+  "search_case": {
+    "endpoint": "/mcp-case-search-service",
+    "title": "司法案例语义检索",
+    "inputSchema": {
+      "properties": {
+        "text": {
+          "description": "自然语言描述的案情文本或关键词，用于智能检索司法案例",
+          "minLength": 2,
+          "type": "string"
+        },
+        "case_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "管辖案件",
+                "刑事案件",
+                "民事案件",
+                "行政案件",
+                "国家赔偿与司法救助案件",
+                "区际司法协助案件",
+                "国际司法协助案件",
+                "司法制裁案件",
+                "非诉保全审查案件",
+                "执行案件",
+                "强制清算与破产案件",
+                "其他案件"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "案件类型，用于筛选"
+        },
+        "doc_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "判决书",
+                "裁定书",
+                "决定书",
+                "调解书",
+                "其他文书"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "文书类型，用于筛选"
+        },
+        "case_grade": {
+          "anyOf": [
+            {
+              "enum": [
+                "指导性案例",
+                "公报案例",
+                "典型案例",
+                "参考案例",
+                "普通案例",
+                "权威案例"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "参照级别筛选。可选：指导性案例、公报案例、典型案例、参考案例、权威案例（四类高参照级别合集）、普通案例。"
+        },
+        "courthouse_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "审理法院，用于筛选，如：北京市海淀区人民法院。"
+        },
+        "courthouse_province": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "审理法院省份(全称)，用于筛选，如：北京市、浙江省。"
+        },
+        "decision_date_start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "审结日期起始，ISO 格式 YYYY-MM-DD，用于限定案例时间范围起点。"
+        },
+        "decision_date_end": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "审结日期结束，ISO 格式 YYYY-MM-DD，用于限定案例时间范围上限。"
+        },
+        "size": {
+          "default": 10,
+          "description": "返回结果数量，默认为10，最大不超过20。",
+          "maximum": 20,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "get_case_list": {
+    "endpoint": "/mcp-case",
+    "title": "查询案例列表，返回前20条。如标题为纠纷案并且正文关键词为合同纠纷",
+    "inputSchema": {
+      "properties": {
+        "title": {
+          "default": "",
+          "description": "标题关键词，如纠纷案，标题关键词或正文关键词至少有一个不为空",
+          "title": "title",
+          "type": "string"
+        },
+        "caseGrade": {
+          "description": "参照级别，值为：指导性案例,参考案例,公报案例,典型案例,参阅案例,评析案例,优秀案例,经典案例,应用案例,法宝推荐,普通案例",
+          "items": {
+            "type": "string"
+          },
+          "title": "caseGrade",
+          "type": "array"
+        },
+        "caseClassName": {
+          "default": "",
+          "description": "案件类型名称，民事一审、首次执行",
+          "title": "caseClassName",
+          "type": "string"
+        },
+        "documentAttr": {
+          "description": "文书类型，值为：判决书,裁定书,调解书,决定书,通知书,支付令",
+          "items": {
+            "type": "string"
+          },
+          "title": "documentAttr",
+          "type": "array"
+        },
+        "court": {
+          "default": "",
+          "description": "终审法院，如最高人民法院、高级人民法院、中级人民法院、基层人民法院等",
+          "title": "court",
+          "type": "string"
+        },
+        "startLastInstanceDate": {
+          "default": "",
+          "description": "开始审结日期，如2024.1.1",
+          "title": "startLastInstanceDate",
+          "type": "string"
+        },
+        "endLastInstanceDate": {
+          "default": "",
+          "description": "终止审结日期，如2024.1.1",
+          "title": "endLastInstanceDate",
+          "type": "string"
+        },
+        "fulltext": {
+          "default": "",
+          "description": "正文关键词，如合同纠纷，标题关键词或正文关键词至少有一个不为空",
+          "title": "fulltext",
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "title": "get_case_listArguments"
+    }
+  },
+  "get_law_item_content": {
+    "endpoint": "/mcp-fatiao",
+    "title": "查询法规中某一个法条的内容，如刑法第2条",
+    "inputSchema": {
+      "properties": {
+        "title": {
+          "description": "标题关键词，如刑法",
+          "title": "title",
+          "type": "string"
+        },
+        "tiao_num": {
+          "description": "条号，如2为第二条，2.1为第二条之一，2.2为第二条之二，必须为整数或小数",
+          "title": "tiao_num",
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "tiao_num"
+      ],
+      "type": "object",
+      "title": "get_law_item_contentArguments"
+    }
+  },
+  "law_recognition": {
+    "endpoint": "/law_recognition",
+    "title": "law_recognition",
+    "inputSchema": {
+      "properties": {
+        "text": {
+          "description": "Extract and standardize the names of regulations and legal provisions.",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object",
+      "title": "law_recognitionArguments"
+    }
+  },
+  "anhao_recognition": {
+    "endpoint": "/case_number_recognition",
+    "title": "anhao_recognition",
+    "inputSchema": {
+      "properties": {
+        "text": {
+          "description": "可能含有案号的法律文本。",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object",
+      "title": "anhao_recognitionArguments"
+    }
+  },
+  "adjust_provisions": {
+    "endpoint": "/pku_citation_validator",
+    "title": "法条权威检索（防幻觉）",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "userlaw": {
+          "description": "【实体提取】直接从用户输入中提取出的法律法规名称和法条编号集合。这是用户明确提到的内容，请做严格提取。",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "description": "【严格提取】用户明确提到的法律名称。例如用户说'根据民法典'，此处填'中华人民共和国民法典'。不要凭空猜测用户没说的法律。",
+                "type": "string"
+              },
+              "article_number": {
+                "description": "【严格提取】用户明确提到的法条编号。建议转换为阿拉伯数字（如'20'）。如果用户没提第几条，请留空。",
+                "type": "string"
+              }
+            }
+          },
+          "default": null
+        },
+        "answerlaw": {
+          "description": "【搜索意图推测】为了准确回答用户问题，你需要去检索哪些法律法规？请推测相关的法律名称、法条编号或检索线索。",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "description": "【搜索范围】你认为答案所在的法律法规全称或通用简称。例如：'中华人民共和国刑法' 或 '民法典'。",
+                "type": "string"
+              },
+              "article_number": {
+                "description": "【精准定位】推测的法条编号（数字）。如果明确知道是第几条（如'20'）请填写；如果完全不确定，请务必留空或填 null。",
+                "type": "string"
+              },
+              "text": {
+                "description": "【检索线索】用于在数据库中定位法条。请根据你的知识，填写该法条的“具体文字内容”（如果你确信），或者填写“核心关键词/含义摘要”（如果你不确定）。工具将使用此文本进行混合检索以锁定权威原文。1. 如果你不知道具体内容，请填 null。2. 严禁在此处重复填写 '刑法第100条' 这种引用格式，这会被视为错误数据。3. 如果已有 article_number，且背不出内容，必须留空。",
+                "type": "string"
+              }
+            }
+          },
+          "default": null
+        },
+        "prompt": {
+          "description": "用户的原始问题文本（Prompt），直接透传，不要修改。",
+          "type": "string",
+          "default": null
+        }
+      }
+    }
+  },
+  "get_linked_content": {
+    "endpoint": "/add-doc-link",
+    "title": "智能添加法规超链接",
+    "inputSchema": {
+      "properties": {
+        "message": {
+          "description": "需要处理的文本内容，例如含法规名或条号的段落。示例：「国家实行全国统一的市场准入负面清单制度。」",
+          "maxLength": 100000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object",
+      "title": "get_linked_contentArguments"
+    }
+  }
+}
