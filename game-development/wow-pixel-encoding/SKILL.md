@@ -63,6 +63,7 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 
 | 需求／关键词 | 读取 |
 | --- | --- |
+| 防骑军备；spec_protection_holy_armaments；GetOverrideSpell；神圣壁垒／圣洁武器形态 | [防骑军备状态](references/spec-protection-holy-armaments.md) |
 | 血DK专精沸点；spec_boiling_point；1265982冷却事件触发的3秒本地倒计时 | [沸点事件倒计时](references/spec-boiling-point.md) |
 | 指定buff／debuff是否存在；AuraContainer | [指定光环是否存在](references/aura-presence.md) |
 | 光环剩余秒数；固定方块字符与字体颜色曲线 | [光环持续时间转为色块](references/aura-duration.md) |

@@ -270,3 +270,11 @@ Phantom 每个目录同时参考 `template.lua`、`condition.py`、`plugin.toml`
 | `target_is_alive@dev` | [unit-alive](references/unit-alive.md) |
 | `target_is_enemy@dev` | [unit-enemy](references/unit-enemy.md) |
 | `target_is_exists@dev` | [unit-exists](references/unit-exists.md) |
+
+## 防骑军备状态
+
+- 2026-09-29：用户审核后移植并以spec_protection命名。来源为Shigure的`Retail/Fuyutsui/unit/player.lua:414`及`core/stateblocks.lua:232`，事件入口为`core/events.lua`的PLAYER_ENTERING_WORLD与SPELL_UPDATE_ICON。`class/Paladin.lua`中防御专精同时列出壁垒与武器充能；神圣专精仅列壁垒充能。共享实现不自动证明跨专精效果一致。
+- 原实现以GetOverrideSpell(375576)匹配432459／432472，再输出index/255；本次加防骑门控、秘密返回保护、未知清零、法术书／专精事件和一秒兜底。源码证据不等于游戏实测，375576替代链及两次形态切换仍待客户端验收。
+- 接入实现为`E:/Documents/GitHub/PixProtection/pix/lua/cells/058_spec_protection_holy_armaments.lua`，配对解析为`pix/context.py`同名属性。reference保持原生独立显示，不包含循环框架。
+- Shigure的`Retail/Fuyutsui/core/spells.lua:46`将432459／432472的已知性回退到1289728，但充能仍读取原ID。本次在充能reference补充可选代理映射，不把1289728当作等价充能来源。
+- 对照本地wow-ui-source的`SpellDocumentation.lua`：GetOverrideSpell无替代时返回输入ID；普通返回值可比较。未识别时清零，不因查询结果等于传入形态ID就认定该形态激活。

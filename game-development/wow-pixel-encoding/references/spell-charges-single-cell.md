@@ -8,6 +8,12 @@
 
 创建时初始化；进入世界、法术书变化、充能和次数事件后延后一轮刷新，并保留一秒兜底。进入世界与法术书变化时重新选择候选。
 
+### 已知性代理与读取ID
+
+某些替代技能需要通过授予它的技能确认已学习，但代理ID不一定能读取该形态的充能。可配置 `KNOWN_SPELL_IDS`，键是充能读取ID，值只用于已知性回退。例如432459／432472的已知性代理为1289728，仍分别将432459／432472交给GetSpellCharges。
+
+代理不能证明当前形态，也不能把两个形态混成等价候选。需要区分形态时分别显示充能，并使用[防骑军备状态](spec-protection-holy-armaments.md)；适用专精和客户端验收边界见该文。默认空代理表不改变读取ID。
+
 ### 格式化路径与秘密值限制
 
 不要将这条路径改成 `formatter:FormatNumber(secretValue)`：[接口声明](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/NumericFormatterAPIDocumentation.lua) 标记 `AllowedWhenUntainted`，在不满足条件的插件执行环境中会拒绝秘密参数。光环层数的 `SetApplicationCount(text, { formatter = formatter })` 是原生绑定，不能据此推断插件主动调用 `FormatNumber` 也能接收秘密计数。
@@ -49,13 +55,19 @@ text:SetFixedColor(false)
 
 -- 按需替换为本角色法术书中的技能；无候选时输出黑色。
 local SPELL_IDS = { 50842 }
+local KNOWN_SPELL_IDS = {} -- 可选：{ [432459] = 1289728, [432472] = 1289728 }
 local selectedSpellID
 local eventFrame = CreateFrame("Frame")
 
 local function SelectSpell()
     selectedSpellID = nil
     for _, spellID in ipairs(SPELL_IDS) do
-        if C_SpellBook.IsSpellInSpellBook(spellID) then
+        local known = C_SpellBook.IsSpellInSpellBook(spellID) or C_SpellBook.IsSpellKnown(spellID)
+        local knownID = KNOWN_SPELL_IDS[spellID]
+        if not known and knownID then
+            known = C_SpellBook.IsSpellInSpellBook(knownID) or C_SpellBook.IsSpellKnown(knownID)
+        end
+        if known then
             selectedSpellID = spellID
             return
         end
