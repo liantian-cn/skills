@@ -46,7 +46,9 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 | 需求／关键词 | 读取 |
 | --- | --- |
 | 技能冷却剩余秒数、GCD；DurationObject | [技能冷却与公共冷却剩余时间](references/spell-cooldown.md) |
-| 技能充能；currentCharges | [技能充能数量](references/spell-charges.md) |
+| 技能充能；currentCharges；NumericRuleFormatter | [充能数量灰度单格](references/spell-charges-single-cell.md) |
+| 技能充能；已知量程的进度条方案 | [充能数量进度条](references/spell-charges-statusbar.md) |
+| 当前可施法次数；GetSpellCastCount；不是累计次数 | [可施法次数灰度单格](references/spell-cast-count-single-cell.md) |
 | 近战／远程／打断射程；IsSpellInRange | [技能对单位的射程判定](references/spell-range.md) |
 | 已知技能／天赋；法术书 | [技能或天赋是否已知](references/spell-known.md) |
 | 技能触发高亮；IsSpellOverlayed | [技能触发高亮](references/spell-overlay.md) |
@@ -64,7 +66,8 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 | 血DK专精沸点；spec_boiling_point；1265982冷却事件触发的3秒本地倒计时 | [沸点事件倒计时](references/spec-boiling-point.md) |
 | 指定buff／debuff是否存在；AuraContainer | [指定光环是否存在](references/aura-presence.md) |
 | 光环剩余秒数；固定方块字符与字体颜色曲线 | [光环持续时间转为色块](references/aura-duration.md) |
-| 光环层数；SetApplicationBar | [光环层数转为进度条](references/aura-stacks.md) |
+| 光环层数；SetApplicationCount；NumericRuleFormatter | [光环层数灰度单格](references/aura-stacks-single-cell.md) |
+| 光环层数；SetApplicationBar；进度条方案 | [光环层数转为进度条](references/aura-stacks-statusbar.md) |
 | 大型防御增益；BIG_DEFENSIVE | [玩家大型防御增益](references/aura-big-defensive.md) |
 | 可驱散buff／debuff；Magic、Enrage等类型 | [按可驱散类型筛选光环](references/aura-dispellable.md) |
 | 姓名板中技能范围内可观察敌人数 | [技能范围内可观察敌人数](references/nameplate-range-count.md) |
@@ -82,11 +85,13 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 
 | 方式 | 优先使用的场景 | Python 读取什么 |
 | --- | --- | --- |
-| Cell 色块 | 普通值可编码；或 API 可将秘密布尔、比例、DurationObject 映射为颜色 | 约定通道值、黑白状态或曲线反插值 |
-| ValueBar 进度条 | 无可用颜色求值路径，秘密数值只能传给 StatusBar，例如充能、光环层数 | 白色填充相对黑白内容的比例，再结合固定量程 |
+| Cell 色块 | 普通值可编码；原生 API 将秘密布尔、比例、DurationObject 映射为颜色；或数值规则格式器输出固定彩色文字 | 约定通道值、灰度计数、黑白状态或曲线反插值 |
+| ValueBar 进度条 | 需要条长与已知量程的表达，或当前数据源缺少适用的单格显示接口；保留充能与层数的旧方案 | 白色填充相对黑白内容的比例，再结合固定量程 |
 | IconTile 图标 | 施法纹理等不能在 Lua 中读取内容的值 | 固定裁剪区域的图像／指纹，与已采样图标匹配 |
 
 能完整表达所需语义时优先选 Cell，尺寸可小至一个物理像素；4×4 只是示例尺寸，不是 API 要求。ValueBar 的宽度决定量化精度。光环持续时间可使用 Cell 字体颜色绑定，在适用场景优先选用这一紧凑的显示方式。吸收量阈值虽然外观是黑白块，内部仍使用 StatusBar。
+
+光环层数、技能充能数量和可施法次数在满足对应 API 前提时优先使用灰度单格：256 条固定文字规则编码 0～255，最高阈值覆盖更大计数，不依赖辅助 StatusBar。需要区分超过 255 的计数时，不能把饱和白色当作精确值。
 
 ## 为什么使用分段曲线
 
@@ -100,7 +105,7 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 
 ## 秘密值与刷新
 
-- 普通值才能直接比较、运算、索引或控制 Lua 分支。潜在秘密布尔用 `C_CurveUtil.EvaluateColorFromBoolean`；比例／持续时间用原生颜色曲线；秘密数值交 StatusBar；秘密纹理交 Texture。取得颜色后直接把 `color:GetRGBA()` 传给显示 API，不把通道拿回 Lua 判断。
+- 普通值才能直接比较、运算、索引或控制 Lua 分支。潜在秘密布尔用 `C_CurveUtil.EvaluateColorFromBoolean`；比例／持续时间用原生颜色曲线；秘密计数可经原生 NumericRuleFormatter 输出文字或交 StatusBar；秘密纹理交 Texture。格式器调用须满足秘密参数条件，输出直接交给显示接口，不读回文本作判断。取得颜色后直接把 `color:GetRGBA()` 传给显示 API，不把通道拿回 Lua 判断。
 - 需要判断普通 nil 时保留原示例的 `issecretvalue` 顺序。某条路径可直接计算不表示其他单位、版本或返回值也可计算。不要通过槽的可见性、文本或布局在 Lua 中反读秘密数据。
 - AuraContainer 负责光环筛选和显隐，DurationText 绑定负责持续更新时间与颜色；不要再读取秘密 AuraData 或给所有光环强加轮询。
 - 普通示例保留事件延后刷新；冷却、进度等在颜色求值后不会自行随时间变动，需要原示例的轮询。每篇分别保留事件、0.1秒／1秒轮询或容器原生更新，不套统一刷新间隔。
@@ -112,6 +117,7 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 
 - **通道采样值**：0～255 的浮点数。黑色包含0；像素为整数，多像素采样结果可为小数。选取不含边缘／装饰的稳定区域；1×1区域直接读取唯一像素，不能套用4×4的裁剪下标。
 - **灰度与亮度值**：本技能默认 Lua 输出 R=G=B；此时可取指定通道，也可平均相同通道与区域内像素，称“亮度值”。这里不是加权感知亮度公式。
+- **灰度整数计数**：单格计数的字节亮度就是计数，按格点舍入，不除以 255 作为计数；0 的缺失歧义和 255 的上限饱和见各篇。它与条长比例、生命百分比和时间曲线分别使用不同解析。
 - **单通道编码**：若项目只用 R、G 或 B 表达数值，Lua曲线端点和Python必须约定同一通道，采样仅使用该通道，不能平均三个通道。截图若为 BGR／BGRA，先识别通道顺序。不同通道承载不同属性时分别解码。
 - **归一化比率**：对 Cell，`通道采样值 / 255.0`，范围0～1；百分数再乘100。ValueBar比率另由填充比例计算，不能拿白色填充的亮度除255代替条长。
 - **黑白布尔**：默认灰度方案用区域全白表示真、全黑表示假。若改成单通道方案，就判断约定通道满值／零值。异常或非纯色不能自动等同业务上的假；容差、失败结果由接入项目明确制定。
@@ -123,6 +129,6 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 
 ## 经验与维护
 
-每种方法按 WoW API、输入条件、显示方式和配对解析描述，保持独立于工程框架。原实现已经用户确认验证；独立示例仍需在接入环境验收。历史来源统一留在维护指南，版本变化时按需核验相关 API。工程控制开关、调度状态和配置框架不属于本技能的属性方法。
+每种方法按 WoW API、输入条件、显示方式和配对解析描述，保持独立于工程框架。原始经验的确认范围见维护指南，不自动延伸到新改写；独立示例仍需在接入环境验收。历史来源统一留在维护指南，版本变化时按需核验相关 API。工程控制开关、调度状态和配置框架不属于本技能的属性方法。
 
 只在新增／修改经验时读取 [维护指南](MAINTENANCE.md)：包含文档模板、来源覆盖清单、验证流程和已排除实现。

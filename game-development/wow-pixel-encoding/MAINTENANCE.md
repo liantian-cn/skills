@@ -70,7 +70,8 @@ Python风格伪代码：约定输入→取通道／条长／图标→恢复业�
 | 冷却 | PixBlood秒数0/10/30/120/245→亮度255/155/115/25/0；不混入Phantom的0/5/30/155/375秒节点 |
 | 光环时长 | 固定方块字符加字体颜色绑定，保留永久／饱和共白色、到期／缺失共黑色 |
 | 光环身份 | 指定目标增益／减益沿用可协助／不可协助分类；驱散增益使用UnitIsEnemy；PLAYER范围包含宠物／载具 |
-| 充能／层数 | PixBlood解析为比例×量程的float；需要Phantom整数输出时显式采用其舍入，不静默更改 |
+| 充能／层数进度条 | 保存在 *-statusbar.md；PixBlood解析为比例×量程的float，需要Phantom整数输出时显式采用其舍入，不静默更改 |
+| 灰度单格计数 | *-single-cell.md 使用256条固定灰度规则，字节即计数；0保留缺失歧义，255表示达到上限；不使用辅助StatusBar |
 | 普通整数资源 | 秘密、越界、非整数报错；小数灵魂碎片另用StatusBar，不泛化普通算术到秘密值 |
 | 物品 | 库存+冷却就绪，与usable+资源+零冷却且不检查库存分别记录 |
 | 玩家乘坐状态 | PixBlood把IsMounted和UnitInVehicle都计入；文件名in_vehicle不代表仅载具 |
@@ -79,6 +80,19 @@ Python风格伪代码：约定输入→取通道／条长／图标→恢复业�
 | 图标 | 去除角标资源与面板；秘密施法纹理不根据SetTexture返回值分支，普通静态ID路径保留加载事件 |
 
 ## 源码覆盖映射
+
+### 灰度单格计数来源
+
+- 版本：1.0.1，整理日期 2026-09-29；变更清单见 [CHANGElOG.txt](CHANGElOG.txt)。
+- 来源为 Shigure，工作区 `E:/Documents/GitHub/Shigure`，分支 `forever-test`，提交 `9a93f6f5c2ecb782890b6d8990479cf3e2d982bd`。`Forever/Shingen/Shingen.toc` 声明 Interface `120100`、Version `1.2.1.30`，不是本次运行客户端的检测结果。
+- `Forever/Shingen/core/block.lua` 的 `GetApplicationFormatter`、`SetupAuraApplicationPixel` 提供256条固定彩色文字规则和 `SetApplicationCount` 绑定的原始路径；对应 [光环层数灰度单格](references/aura-stacks-single-cell.md)。
+- 同文件的 `CreateCountPixel` 分别读取 `GetSpellCharges().currentCharges` 与 `GetSpellCastCount`；调用入口为 `Forever/Shingen/unit/player.lua` 的 `RefreshPlayerBars`。分别对应 [充能数量灰度单格](references/spell-charges-single-cell.md) 与 [可施法次数灰度单格](references/spell-cast-count-single-cell.md)。后者是当前可施放次数，不是累计施法次数；现有旧充能文没有这条数据源，不虚构旧施法次数示例。
+- 原工程的配对解析是 C# `Runtime/PixelScanDecoder.cs` 的 `TryDecodeTopRowBlock`，并非 Python：R/G 编码索引、B 编码数值。新示例移除索引通道，改为 R=G=B=计数字节；每篇自行给出 Python 风格解析伪代码。
+- 充能与可施法次数的原工程路径使用辅助 StatusBar 钳制后以 `string.format` 生成颜色码。新示例明确改写为 `formatter:FormatNumber(value)` 后直接 `SetText`，使用预生成的最高阈值白色规则承接255及以上，不创建辅助 StatusBar，也不在 Lua 中格式化秘密数值。
+- 为保持独立示例的既有行为，充能与可施法次数使用法术书候选选择、事件延后刷新及一秒兜底；这部分继承旧充能 reference 的结构，不冒称原工程完全采用同一调度。光环例保留玩家增益及目标/焦点减益的筛选与门控，新增显式模板插件加载。
+- 原进度条 reference 仅改名为 `aura-stacks-statusbar.md`、`spell-charges-statusbar.md`，保留原文；`aura-duration.md` 的颜色曲线版本未更改。历史 PixBlood/Phantom 来源映射继续指向旧方案。
+- 用户已报告 Shigure 原实现可用；此次灰度、独立初始化以及 `FormatNumber` 调用路径属于新改写，不能继承为已游戏实测。静态校验覆盖链接、Lua 语法、0/1/254/255/256 的规则输出及解码对应关系；秘密状态、实际字形覆盖、光环切换与零/满充能等仍需客户端验收。
+- API 依据：[数值规则结构](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/NumericRuleFormatterSharedDocumentation.lua)、[FormatNumber](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/NumericFormatterAPIDocumentation.lua)。规则阈值为最低适用输入，直接格式化须满足 `AllowedWhenUntainted`；输出不用于 Lua 反读。上述链接为可变的 live 源码镜像。
 
 ### 沸点事件倒计时
 
@@ -139,8 +153,8 @@ Phantom 每个目录同时参考 `template.lua`、`condition.py`、`plugin.toml`
 | `045_spell_cd_dancing_rune_weapon.lua` | [spell-cooldown](references/spell-cooldown.md) |
 | `046_spell_cd_deaths_caress.lua` | [spell-cooldown](references/spell-cooldown.md) |
 | `047_spell_cd_raise_dead.lua` | [spell-cooldown](references/spell-cooldown.md) |
-| `048_spell_charges_blood_boil.lua` | [spell-charges](references/spell-charges.md) |
-| `051_spell_charges_death_and_decay.lua` | [spell-charges](references/spell-charges.md) |
+| `048_spell_charges_blood_boil.lua` | [spell-charges-statusbar](references/spell-charges-statusbar.md) |
+| `051_spell_charges_death_and_decay.lua` | [spell-charges-statusbar](references/spell-charges-statusbar.md) |
 | `054_item_cd_lights_potential.lua` | [item-cooldown](references/item-cooldown.md) |
 | `055_player_has_dance_of_midnight.lua` | [aura-presence](references/aura-presence.md) |
 | `056_player_has_buff_boiling_point.lua` | [aura-presence](references/aura-presence.md) |
@@ -148,7 +162,7 @@ Phantom 每个目录同时参考 `template.lua`、`condition.py`、`plugin.toml`
 | `058_player_has_buff_crimson_scourge.lua` | [aura-presence](references/aura-presence.md) |
 | `059_player_has_buff_exterminate.lua` | [aura-presence](references/aura-presence.md) |
 | `060_player_buff_duration_bone_shield.lua` | [aura-duration](references/aura-duration.md) |
-| `061_player_buff_stacks_bone_shield.lua` | [aura-stacks](references/aura-stacks.md) |
+| `061_player_buff_stacks_bone_shield.lua` | [aura-stacks-statusbar](references/aura-stacks-statusbar.md) |
 | `065_target_has_debuff_blood_plague.lua` | [aura-presence](references/aura-presence.md) |
 | `I01_player_cast_icon.lua` | [cast-icon](references/cast-icon.md) |
 | `I02_assisted_combat_icon.lua` | [assisted-combat-icon](references/assisted-combat-icon.md) |
@@ -163,10 +177,10 @@ Phantom 每个目录同时参考 `template.lua`、`condition.py`、`plugin.toml`
 | --- | --- |
 | `aura_player_buff_duration@dev` | 按用户要求跳过旧进度条方案；持续时间读取 [aura-duration](references/aura-duration.md)，不承诺旧百分比契约仍被保留 |
 | `aura_player_buff_duration_pct@dev` | 按用户要求跳过旧进度条方案；持续时间读取 [aura-duration](references/aura-duration.md)，不承诺旧百分比契约仍被保留 |
-| `aura_player_buff_stacks@dev` | [aura-stacks](references/aura-stacks.md) |
+| `aura_player_buff_stacks@dev` | [aura-stacks-statusbar](references/aura-stacks-statusbar.md) |
 | `aura_target_debuff_duration@dev` | 按用户要求跳过旧进度条方案；持续时间读取 [aura-duration](references/aura-duration.md)，不承诺旧百分比契约仍被保留 |
 | `aura_target_debuff_duration_pct@dev` | 按用户要求跳过旧进度条方案；持续时间读取 [aura-duration](references/aura-duration.md)，不承诺旧百分比契约仍被保留 |
-| `aura_target_debuff_stacks@dev` | [aura-stacks](references/aura-stacks.md) |
+| `aura_target_debuff_stacks@dev` | [aura-stacks-statusbar](references/aura-stacks-statusbar.md) |
 | `focus_can_assist@dev` | [unit-can-assist](references/unit-can-assist.md) |
 | `focus_can_attack@dev` | [unit-can-attack](references/unit-can-attack.md) |
 | `focus_cast_icon@dev` | [cast-icon](references/cast-icon.md) |
@@ -225,7 +239,7 @@ Phantom 每个目录同时参考 `template.lua`、`condition.py`、`plugin.toml`
 | `spec_power_rune@dev` | [runes](references/runes.md) |
 | `spec_power_runic_power@dev` | [power-percent](references/power-percent.md) |
 | `spec_power_soul_shards@dev` | [power-integer](references/power-integer.md)、[soul-shard-fragments](references/soul-shard-fragments.md) |
-| `spell_charges@dev` | [spell-charges](references/spell-charges.md) |
+| `spell_charges@dev` | [spell-charges-statusbar](references/spell-charges-statusbar.md) |
 | `spell_cooldown@dev` | [spell-cooldown](references/spell-cooldown.md) |
 | `spell_gcd@dev` | [spell-cooldown](references/spell-cooldown.md) |
 | `spell_in_range@dev` | [spell-range](references/spell-range.md) |

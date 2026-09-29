@@ -1,0 +1,22 @@
+wow-pixel-encoding 1.0.1
+日期：2026-09-29
+
+新增
+- aura-stacks-single-cell.md：光环层数灰度单格，包含玩家增益和目标/焦点减益独立示例。
+- spell-charges-single-cell.md：当前充能数量灰度单格。
+- spell-cast-count-single-cell.md：当前可施法次数灰度单格，区别于累计施法次数。
+- 三篇采用 NumericRuleFormatter 的 256 条固定灰度文字规则；R=G=B，0 为黑色，255 及以上为白色，不依赖辅助 StatusBar 限定范围。
+- 每篇包含完整 Lua、刷新方式、解析伪代码、零值歧义和饱和边界。
+
+调整
+- aura-stacks.md 重命名为 aura-stacks-statusbar.md，内容保留。
+- spell-charges.md 重命名为 spell-charges-statusbar.md，内容保留。
+- 更新 SKILL.md 索引、显示路径选择和灰度计数解析说明。
+- 更新 MAINTENANCE.md，记录 Shigure 来源及灰度/格式器改写差异。
+
+保持
+- aura-duration.md 的颜色曲线版本未改动。
+- 原进度条示例保留，未修改原有编码与解析语义。
+
+验证边界
+- 文档、链接、Lua 语法及规则编码进行静态验证；新灰度示例尚未在游戏客户端验收。
