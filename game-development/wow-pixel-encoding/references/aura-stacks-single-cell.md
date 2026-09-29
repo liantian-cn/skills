@@ -4,6 +4,10 @@
 
 在 AuraContainer 的槽初始化中创建 FontString，通过 `SetApplicationCount(text, { formatter = formatter })` 绑定原生数值规则格式器。光环层数由原生绑定送入格式器；Lua 不读取秘密 AuraData，也不比较或计算层数。
 
+这里由原生绑定消费层数，不在插件回调中调用 `formatter:FormatNumber(secretValue)`。后者要求 `AllowedWhenUntainted`，不能与绑定路径互换；充能和可施法次数的单格文档使用另一条 `string.format → SetText` 路径。
+
+`CreateNumericRuleFormatter()` 构造开销较高，项目接入时在共享初始化位置创建一次并设置规则，供使用相同 R=G=B 编码的光环槽引用；不要在刷新或每个槽的初始化回调里反复创建。下面两个独立示例各自初始化一次；合并使用时可共享同一实例。
+
 日常层数与显隐由原生容器更新，不增加轮询。无光环时槽隐藏，露出外层黑底。无光环、无堆叠计数与零计数无法仅凭黑色区分；255 与更大计数都显示白色。不使用按最大层数缩放的比例，1 层就是灰度字节 1。
 
 两段代码是独立示例，选一段放入已加载的插件 Lua 文件即可；若同时使用需调整显示位置。玩家示例显示 `HELPFUL|PLAYER`，目标/焦点示例显示不可协助侧的 `HARMFUL|PLAYER`。PLAYER 来源范围包含玩家宠物/载具，不能等同只来自角色本人；不可协助也不保证可攻击。单槽多个 ID 由容器选中其中一个，不汇总层数。

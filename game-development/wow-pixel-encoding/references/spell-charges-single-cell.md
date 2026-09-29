@@ -2,21 +2,25 @@
 
 ## 说明&逻辑
 
-`C_Spell.GetSpellCharges` 返回结构中的 `currentCharges` 是当前充能数量，不是下一层充能的恢复时间。选择法术书中的首个候选技能，把该字段直接交给 `formatter:FormatNumber`，再交给 FontString。
+`C_Spell.GetSpellCharges` 返回结构中的 `currentCharges` 是当前充能数量，不是下一层充能的恢复时间。选择法术书中的首个候选技能，将秘密数值直接传给 `string.format` 的三个 `%02X`，生成 R=G=B 的颜色码，再将结果直接交给 `FontString:SetText`。不创建 NumericRuleFormatter，也不使用辅助 StatusBar。
 
-无已知候选、无充能结构、普通 nil 字段与真实零计数均显示黑色，不能仅凭本格区分。候选选择只判断普通法术书信息；数值 nil 判断先检查 `issecretvalue`，秘密数值直接进入格式器。示例 ID 50842 为具体充能技能候选；未学习时输出零。充能返回结构的存在性可判断，潜在秘密字段不参与 Lua 条件。
+无已知候选、无充能结构、普通 nil 字段与真实零计数均显示黑色。充能结构的存在性可判断，潜在秘密字段不参与 Lua 条件。示例 ID 50842 为充能技能候选，已知计数范围为 0～2；未学习时输出零。候选选择只判断普通法术书信息；数值 nil 判断先检查 `issecretvalue`，秘密数值不比较、不计算、不作为表索引。
 
 创建时初始化；进入世界、法术书变化、充能和次数事件后延后一轮刷新，并保留一秒兜底。进入世界与法术书变化时重新选择候选。
 
-[NumericFormatter:FormatNumber 声明](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/NumericFormatterAPIDocumentation.lua) 将秘密参数条件标为 `AllowedWhenUntainted`，需满足该条件。结果直接传给 `SetText`，不在 Lua 中读回、比较或解析结果。不能把显示输出当作已经解除秘密限制的普通字符串。
+### 格式化路径与秘密值限制
 
-### 灰度编码与秘密值
+不要将这条路径改成 `formatter:FormatNumber(secretValue)`：[接口声明](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/NumericFormatterAPIDocumentation.lua) 标记 `AllowedWhenUntainted`，在不满足条件的插件执行环境中会拒绝秘密参数。光环层数的 `SetApplicationCount(text, { formatter = formatter })` 是原生绑定，不能据此推断插件主动调用 `FormatNumber` 也能接收秘密计数。
 
-初始化时生成 256 条固定文本规则：阈值 n 对应颜色码 `|cFFnnnnnn█|r`，其中每个 nn 是 n 的两位十六进制。循环变量是普通数字，实际秘密计数只交给原生格式器。没有用秘密数值执行 Lua 比较、算术、表索引或 `string.format`。
+此处参考的是 `string.format → SetText` 显示路径；格式化结果直接用于显示，不读回、比较或解析。不能仅凭 `SetText` 接受秘密参数，推断任何客户端版本的 `string.format` 都支持秘密数值；当前灰度直传改写仍需游戏内验收。
 
-R=G=B 的颜色字节都等于输出计数，0 为黑色、1 为灰度 1、254 为灰度 254；255 及更大计数沿用最高阈值的白色规则。这里采用非负整数输入，不提供负数或小数编码语义。无需额外控件钳制，也不需要在规则中设置 `max`：最后一条输出文本本来就是固定白色。
+### 灰度编码与范围
 
-把实心字形放大并居中，只让小格子保留其内部区域。文字不设置会截断字形的窄宽高，关闭阴影，并允许内嵌颜色码生效。4×4 是示例尺寸；1×1 物理像素也可以表达同一灰度，但必须确保字形完全覆盖采样位置。1 层只比黑色亮一个字节，人眼几乎看不出，不代表没有数值。
+输入必须是已知范围内的 **0～255 非负整数**。`string.format("|cFF%02X%02X%02X%s|r", value, value, value, CHARACTER)` 将同一个计数写入 R/G/B：0 为黑色、1 为灰度 1、255 为白色。不需要 256 条规则，也没有按最大充能或次数缩放。
+
+`%02X` 只保证最少两位，**不负责钳制**。256 会输出三位 `100`，破坏固定宽度颜色码，因此本例不支持大于 255、负数或小数，不承诺上限饱和。适用范围应依据技能语义预先确认，不能通过比较或计算秘密值进行运行时范围检查。此处 255 表示精确计数 255，与光环规则方案的“至少 255”不同。
+
+把实心字形放大并居中，只保留格子内部区域。文字不限制窄宽高，关闭阴影，并允许内嵌颜色码生效。4×4 是示例尺寸；较小格子也必须确保字形覆盖有效采样位置。灰度 1 肉眼接近黑色，不代表零计数。
 
 ## Lua代码块
 
@@ -34,17 +38,6 @@ local background = canvas:CreateTexture(nil, "BACKGROUND")
 background:SetAllPoints(canvas)
 background:SetColorTexture(0, 0, 0, 1)
 
--- 初始化时只使用普通循环变量，不在 Lua 中处理秘密计数。
-local formatter = C_StringUtil.CreateNumericRuleFormatter()
-local rules = {}
-for count = 0, 255 do
-    rules[#rules + 1] = {
-        threshold = count,
-        format = string.format("|cFF%02X%02X%02X%s|r",
-            count, count, count, CHARACTER),
-    }
-end
-formatter:SetBreakpoints(rules)
 local text = canvas:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 text:SetPoint("CENTER", canvas, "CENTER")
 text:SetJustifyH("CENTER")
@@ -71,19 +64,19 @@ end
 
 local function Refresh()
     if selectedSpellID == nil then
-        text:SetText(formatter:FormatNumber(0))
+        text:SetText("|cFF000000█|r")
         return
     end
     local chargeInfo = C_Spell.GetSpellCharges(selectedSpellID)
     if chargeInfo == nil then
-        text:SetText(formatter:FormatNumber(0))
+        text:SetText("|cFF000000█|r")
         return
     end
     local value = chargeInfo.currentCharges
     if not issecretvalue(value) and value == nil then
         value = 0
     end
-    text:SetText(formatter:FormatNumber(value))
+    text:SetText(string.format("|cFF%02X%02X%02X%s|r", value, value, value, CHARACTER))
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -132,7 +125,7 @@ gray = (r + g + b) / 3
 count = floor(gray + 0.5)
 if count < 0 or count > 255:
     return 无效采样
-return count  # 255 表示至少 255；0 的业务歧义见上文
+return count  # 输入范围已确认在 0～255；255 是精确值，0 可表示缺失
 ```
 
 容差由接入环境校准；理想纯色输入可取 0。三个通道相等只能排除部分异常，不能检测共同的亮度偏移。抗锯齿、透明度、颜色变换或其他覆盖可能改变输出，因此需检查实际渲染。不要再除以 255 当作计数，不要按白像素比例计算，也无需 OCR。
@@ -143,12 +136,12 @@ return count  # 255 表示至少 255；0 的业务歧义见上文
 | 1 | (1, 1, 1) | 1 |
 | 254 | (254, 254, 254) | 254 |
 | 255 | (255, 255, 255) | 255 |
-| 256 | (255, 255, 255) | 255 |
+| 256 | 超出适用范围，颜色码不再有效 | 不支持 |
 
 ## 来源与适用边界
 
-本篇是独立灰度改写，完整 Lua 可放入已加载的插件文件，无需加载其他 reference 的代码；未包含插件 TOC。要求客户端提供所用格式器、文字接口及相应数据 API。字体必须包含 U+2588 实心字形。
+本篇是独立灰度改写，完整 Lua 可放入已加载的插件文件，无需加载其他 reference 的代码；未包含插件 TOC。要求客户端支持此处的秘密数值格式化显示路径、文字接口及相应数据 API。字体必须包含 U+2588 实心字形。
 
-本次静态校验不等于游戏内验收。应实际检查秘密状态下的显示、0/1/254/255/256、缺失数据与状态切换，以及不同 UI 缩放下的纯色覆盖。原始实现的使用结果不能自动扩展为本篇改写的实测结论。
+当前直接格式化灰度的改写尚未收到游戏内验收结果。应检查秘密状态下的显示、零值与业务最大计数、缺失数据与状态切换，以及不同 UI 缩放下的纯色覆盖。0/1/254/255 可作为静态编码样本；256 仅用于说明越界不受支持，不作为饱和测试。原始实现的使用结果不能自动扩展为本篇改写的实测结论。
 
 仅追溯时读取 [单格计数来源记录](../MAINTENANCE.md#灰度单格计数来源)；日常理解与使用无需读取原工程。

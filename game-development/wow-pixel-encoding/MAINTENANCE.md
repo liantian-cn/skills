@@ -88,11 +88,20 @@ Python风格伪代码：约定输入→取通道／条长／图标→恢复业�
 - `Forever/Shingen/core/block.lua` 的 `GetApplicationFormatter`、`SetupAuraApplicationPixel` 提供256条固定彩色文字规则和 `SetApplicationCount` 绑定的原始路径；对应 [光环层数灰度单格](references/aura-stacks-single-cell.md)。
 - 同文件的 `CreateCountPixel` 分别读取 `GetSpellCharges().currentCharges` 与 `GetSpellCastCount`；调用入口为 `Forever/Shingen/unit/player.lua` 的 `RefreshPlayerBars`。分别对应 [充能数量灰度单格](references/spell-charges-single-cell.md) 与 [可施法次数灰度单格](references/spell-cast-count-single-cell.md)。后者是当前可施放次数，不是累计施法次数；现有旧充能文没有这条数据源，不虚构旧施法次数示例。
 - 原工程的配对解析是 C# `Runtime/PixelScanDecoder.cs` 的 `TryDecodeTopRowBlock`，并非 Python：R/G 编码索引、B 编码数值。新示例移除索引通道，改为 R=G=B=计数字节；每篇自行给出 Python 风格解析伪代码。
-- 充能与可施法次数的原工程路径使用辅助 StatusBar 钳制后以 `string.format` 生成颜色码。新示例明确改写为 `formatter:FormatNumber(value)` 后直接 `SetText`，使用预生成的最高阈值白色规则承接255及以上，不创建辅助 StatusBar，也不在 Lua 中格式化秘密数值。
+- 充能与可施法次数的原工程路径使用辅助 StatusBar 钳制后以 `string.format` 生成颜色码。1.0.1 曾改写为 `formatter:FormatNumber(value)` 后直接 `SetText`；该直接调用现已因下述实测限制撤回。当前两篇改为 `string.format → SetText`，R=G=B，无辅助 StatusBar，限定输入为已知 0～255 整数，不再承诺超过 255 时饱和。
 - 为保持独立示例的既有行为，充能与可施法次数使用法术书候选选择、事件延后刷新及一秒兜底；这部分继承旧充能 reference 的结构，不冒称原工程完全采用同一调度。光环例保留玩家增益及目标/焦点减益的筛选与门控，新增显式模板插件加载。
 - 原进度条 reference 仅改名为 `aura-stacks-statusbar.md`、`spell-charges-statusbar.md`，保留原文；`aura-duration.md` 的颜色曲线版本未更改。历史 PixBlood/Phantom 来源映射继续指向旧方案。
-- 用户已报告 Shigure 原实现可用；此次灰度、独立初始化以及 `FormatNumber` 调用路径属于新改写，不能继承为已游戏实测。静态校验覆盖链接、Lua 语法、0/1/254/255/256 的规则输出及解码对应关系；秘密状态、实际字形覆盖、光环切换与零/满充能等仍需客户端验收。
+- 用户已报告 Shigure 原实现可用；灰度、独立初始化和移除辅助钳制属于改写，不能继承为已游戏实测。光环规则保留 255 及以上饱和；充能与可施法次数直传方案仅覆盖 0～255，256 不受支持。秘密状态、实际字形覆盖、光环切换与零/满充能等仍需客户端验收。
 - API 依据：[数值规则结构](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/NumericRuleFormatterSharedDocumentation.lua)、[FormatNumber](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/NumericFormatterAPIDocumentation.lua)。规则阈值为最低适用输入，直接格式化须满足 `AllowedWhenUntainted`；输出不用于 Lua 反读。上述链接为可变的 live 源码镜像。
+
+
+#### 2026-09-29：秘密计数直接调用修正
+
+- PixBlood 实测在 `048_spell_charges_blood_boil.lua` 调用 `CountFormatter:FormatNumber(currentCharges)` 报错：秘密参数只允许 untainted execution；日志中 `currentCharges` 为 secret number。这确认的是该直接调用路径失败，不是共享 formatter 或灰度编码失败。
+- 对照 Shigure `CreateCountPixel`：充能／可施法次数使用 `string.format → SetText`，而光环层数使用 `SetApplicationCount` 原生绑定；不能把两种消费者混为一谈。
+- PixBlood 提交 `ded42db` 修改 048、051 为秘密值直接格式化三个相同颜色通道；两技能计数为 0～2，用户明确不要辅助 StatusBar。061 与原 067（布局调整后为 052）已经使用原生光环绑定，无需改成主动格式化。
+- 本次同步修正 `spell-charges-single-cell.md` 与 `spell-cast-count-single-cell.md`，后者同样曾直接调用受限方法，不能遗漏。保留原有数据源、候选选择和刷新机制。
+- 当前没有收到 PixBlood 新路径的游戏内验证结果，也未单独实测可施法次数；只记录失败证据、源码一致性和静态验证。共享 formatter 仍用于光环规则，在初始化阶段创建一次。
 
 ### 沸点事件倒计时
 

@@ -1,3 +1,12 @@
+wow-pixel-encoding 1.0.2
+日期：2026-09-29
+
+修正
+- 技能充能及可施法次数：移除插件直接 FormatNumber(秘密值) 的示例，改为 string.format → SetText，保持 R=G=B，无辅助 StatusBar。
+- 明确直接格式化要求输入为已知 0～255 整数，%02X 不钳制，超过 255 不再承诺饱和。
+- 光环层数保留 SetApplicationCount 原生绑定及饱和规则；补充 formatter 初始化一次并共享的要求。
+- 更新索引和维护记录，区分已报告的 FormatNumber 失败与仍待游戏内验证的修正路径。
+
 wow-pixel-encoding 1.0.1
 日期：2026-09-29
 
