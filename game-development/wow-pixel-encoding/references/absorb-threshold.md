@@ -1,5 +1,7 @@
 # 吸收量是否严格超过阈值
 
+需要相对于最大生命的比例时，使用[两类吸收ValueBar](party-absorb-valuebar.md)，不要用固定绝对阈值代替百分比。
+
 ## 说明&逻辑
 
 `UnitGetTotalHealAbsorbs` 或 `UnitGetTotalAbsorbs` 的秘密数值直接进入 StatusBar。量程设为 [THRESHOLD, THRESHOLD+1]，在吸收量为整数的前提下，小于等于阈值全黑，大于阈值全白。外观像 Cell，但底层机制是进度条，不用 Lua 比较秘密值。初始化和对应吸收变化事件刷新，无轮询。阈值只是配置示例；若换成可含小数的属性，中间可能为部分填充，不能照搬布尔解释。

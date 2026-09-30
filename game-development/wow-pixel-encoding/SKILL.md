@@ -29,6 +29,17 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 | 存活宠物；pet | [玩家是否有存活宠物](references/player-pet.md) |
 | 职责；UnitGroupRolesAssigned | [玩家职责枚举](references/player-role.md) |
 
+### 小队与首领
+
+| 需求／关键词 | 读取 |
+| --- | --- |
+| party1–4；四个连续cell；存在、存活、连接、职责、职业、生命、射程；队伍事件 | [小队集中状态Cell](references/party-status.md) |
+| 小队指定buff、多ID光环、魔法／疾病／中毒；同token换人重绑 | [小队光环与驱散](references/party-auras.md) |
+| 小队伤害吸收／治疗吸收占最大生命比例；ValueBar；整数Cell宽度 | [两类吸收百分比ValueBar](references/party-absorb-valuebar.md) |
+| 玩家本次读条目标；SENT/START；当前与待施法分别记录 | [小队施法目标生命周期](references/party-cast-target.md) |
+| 首领战模块；encounterID映射；boss1/2计时；目标是boss1 | [首领状态模块](references/encounter-state.md) |
+| 施法／引导已过秒数、剩余秒数；DurationObject | [施法秒数](references/cast-time.md) |
+
 ### 生命与资源
 
 | 需求／关键词 | 读取 |
@@ -39,7 +50,7 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 | 整数：连击点、圣能、真气、精华、奥术充能、整灵魂碎片 | [普通整数资源直接编码](references/power-integer.md) |
 | 0～6枚可用符文；GetRuneCooldown | [可用符文数量](references/runes.md) |
 | 小数灵魂碎片；0～50原始片段 | [包含十分之一的灵魂碎片](references/soul-shard-fragments.md) |
-| 治疗／伤害吸收量严格超过阈值 | [吸收量是否严格超过阈值](references/absorb-threshold.md) |
+| 治疗／伤害吸收量严格超过固定绝对阈值；Cell | [吸收量是否严格超过阈值](references/absorb-threshold.md) |
 
 ### 技能、物品与施法
 

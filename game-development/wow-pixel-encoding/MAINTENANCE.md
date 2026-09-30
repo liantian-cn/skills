@@ -278,3 +278,16 @@ Phantom 每个目录同时参考 `template.lua`、`condition.py`、`plugin.toml`
 - 接入实现为`E:/Documents/GitHub/PixProtection/pix/lua/cells/058_spec_protection_holy_armaments.lua`，配对解析为`pix/context.py`同名属性。reference保持原生独立显示，不包含循环框架。
 - Shigure的`Retail/Fuyutsui/core/spells.lua:46`将432459／432472的已知性回退到1289728，但充能仍读取原ID。本次在充能reference补充可选代理映射，不把1289728当作等价充能来源。
 - 对照本地wow-ui-source的`SpellDocumentation.lua`：GetOverrideSpell无替代时返回输入ID；普通返回值可比较。未识别时清零，不因查询结果等于传入形态ID就认定该形态激活。
+
+
+## 小队集中属性与首领状态
+
+2026-10-01：新增四连续小队Cell、两类吸收百分比ValueBar、玩家当前施法目标生命周期和首领状态方法。
+
+- 小队刷新参考 `E:/Documents/GitHub/PixBlood/references/DejaVu/DejaVu_Party/Status.lua`：先判断存在，合并队伍事件，空槽清零；本次接入为 `E:/Documents/GitHub/PixHoly/pix/lua/core/units.lua` 和四连续属性文件。
+- 治疗吸收来源为 Shigure `Fuyutsui/core/block.lua` 的详细治疗计算器，源码版本 `ca5f864c868cb5651b628c17a09d75dd94e8b5c6`；伤害吸收版本使用已有 `UnitGetTotalAbsorbs` 路径配最大生命。两者口径分别说明，不把计算后的治疗吸收叫作原始总量。
+- ValueBar参考 `PixHoly/pix/lua/ui/valuebar.lua`：内容5个4px Cell、完整占6 Cell，Python `getValueBar(x,5)` 的黑白比例配对。技能示例去掉工程显示类，使用原生背板、红色分隔与StatusBar；约5个百分点精度不是所有宽度的固定规则。
+- 当前读条与待施法请求分开，目标无法匹配时输出未知；新 `party-cast-target.md` 不继承旧 `cast-target.md` 每秒清空和秘密目标名保留旧值的行为。该变体属于新增生命周期实现，不能继承旧实现的游戏实测结论。
+- 首领完整枚举来自 Shigure `Fuyutsui/core/config.lua`；首领秒数、目标身份和玩家剩余读条接入到 PixHoly 060、064、067组。技能只记录显示和解析，不包含自动操作或治疗决策。
+- 本地官方界面源码版本 `09b9db7948abc9b9648dedaab51eb0cf3ee67b31`。核对了 UnitDocumentation、LuaDurationObject、UnitHealPredictionCalculator、SimpleStatusBar、Blizzard_AuraContainer：DurationObject秘密对象检查、施法事件参数位置、GetHealAbsorbs第二返回值、同token重绑均按接口处理。
+- 验证范围：独立Lua示例语法、技能元数据与链接、项目静态检查及像素协议。游戏内实际渲染、秘密状态和事件切换仍需接入验收；伤害吸收比例示例没有冒称已经在客户端实测。
