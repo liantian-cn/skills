@@ -291,3 +291,11 @@ Phantom 每个目录同时参考 `template.lua`、`condition.py`、`plugin.toml`
 - 首领完整枚举来自 Shigure `Fuyutsui/core/config.lua`；首领秒数、目标身份和玩家剩余读条接入到 PixHoly 060、064、067组。技能只记录显示和解析，不包含自动操作或治疗决策。
 - 本地官方界面源码版本 `09b9db7948abc9b9648dedaab51eb0cf3ee67b31`。核对了 UnitDocumentation、LuaDurationObject、UnitHealPredictionCalculator、SimpleStatusBar、Blizzard_AuraContainer：DurationObject秘密对象检查、施法事件参数位置、GetHealAbsorbs第二返回值、同token重绑均按接口处理。
 - 验证范围：独立Lua示例语法、技能元数据与链接、项目静态检查及像素协议。游戏内实际渲染、秘密状态和事件切换仍需接入验收；伤害吸收比例示例没有冒称已经在客户端实测。
+
+
+### 技能充能恢复剩余时间
+
+- 2026-10-02：新增 `references/spell-recharge-time.md`，来源为 `E:/Documents/GitHub/Shigure/Fuyutsui/core/spells.lua` 的 `UpdateSpellCooldown`，以及本地 `E:/Documents/GitHub/wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/SpellDocumentation.lua` 的 `GetSpellChargeDuration` 声明。此处引用工作区源码，不将其当作已核实的最新线上版本。
+- 接入文件为 `E:/Documents/GitHub/PixBeastMastery/pix/lua/cells/062_spell_recharge_barbed_shot.lua`；048与075分别提供当前和最大充能，配对解析在 `pix/context.py` 的 `spell_recharge_barbed_shot`。
+- 参考工程使用单通道线性秒数；本次改用既有灰度分段冷却曲线，保持0–10秒区间0.1秒精度。无对象显示黑色，Python依靠当前/最大充能区分满充能与缺失，避免将未学习误判为就绪。
+- 本次范围为API/来源核对、Lua语法编译和Python像素解析检查；游戏内秘密值和实际渲染尚未验收。文档只覆盖属性显示及解析，不包含轮转或输入执行。

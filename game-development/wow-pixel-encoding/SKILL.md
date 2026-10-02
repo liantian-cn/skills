@@ -57,6 +57,7 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 | 需求／关键词 | 读取 |
 | --- | --- |
 | 技能冷却剩余秒数、GCD；DurationObject | [技能冷却与公共冷却剩余时间](references/spell-cooldown.md) |
+| 技能下一层充能恢复剩余秒数；GetSpellChargeDuration；满充能 | [充能恢复剩余时间](references/spell-recharge-time.md) |
 | 技能充能；currentCharges；string.format | [充能数量灰度单格](references/spell-charges-single-cell.md) |
 | 技能充能；已知量程的进度条方案 | [充能数量进度条](references/spell-charges-statusbar.md) |
 | 当前可施法次数；GetSpellCastCount；string.format；不是累计次数 | [可施法次数灰度单格](references/spell-cast-count-single-cell.md) |
