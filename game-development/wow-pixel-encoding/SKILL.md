@@ -38,6 +38,7 @@ description: 将 WoW 内置属性通过 Lua 显示为色块、进度条或图标
 | 小队伤害吸收／治疗吸收占最大生命比例；ValueBar；整数Cell宽度 | [两类吸收百分比ValueBar](references/party-absorb-valuebar.md) |
 | 玩家本次读条目标；SENT/START；当前与待施法分别记录 | [小队施法目标生命周期](references/party-cast-target.md) |
 | 首领战模块；encounterID映射；boss1/2计时；目标是boss1 | [首领状态模块](references/encounter-state.md) |
+| 是否处于遭遇战；不区分首领；IsEncounterInProgress；ENCOUNTER_STATE_CHANGED | [遭遇战布尔状态](references/encounter-in-progress.md) |
 | 施法／引导已过秒数、剩余秒数；DurationObject | [施法秒数](references/cast-time.md) |
 
 ### 生命与资源

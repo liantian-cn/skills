@@ -1,5 +1,12 @@
 # 维护 wow-pixel-encoding
 
+## 遭遇战布尔状态
+
+- 2026-10-03：新增 `references/encounter-in-progress.md`。来源为 `E:/Documents/GitHub/PixBeastMastery/pix/lua/cells/086_encounter_in_progress.lua` 和 `pix/context.py` 的 `encounter_in_progress`；与已有首领编号、计时及目标身份方法分别维护。
+- 核对本地 `E:/Documents/GitHub/wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/InstanceEncounterDocumentation.lua` 及[线上暴雪 UI 源码镜像](https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/InstanceEncounterDocumentation.lua)：`C_InstanceEncounter.IsEncounterInProgress()` 返回非 nil bool，`ENCOUNTER_STATE_CHANGED` 在状态改变时发出。本地 `Blizzard_EncounterTimeline/EncounterTimeline.lua` 使用 `RegisterEvent` 注册该事件。线上 live 链接内容可能变化。
+- 按游戏 API 直接判定，不维护遭遇战编号，不附加玩家存活、战斗或目标条件。初始化与进入世界时查询，事件延后刷新，每秒兜底；随机初始相位沿用现有布尔 Cell。独立示例移除工程框架，保留原生布尔颜色映射及配对解析。
+- 已通过项目与独立示例的 Lua 语法解析（luaparser）、技能元数据及相对文件链接检查、Python 类型与语法检查、352px 基板第86格黑→白→黑解码检查和补丁空白检查。游戏内状态转换、重载恢复及实际像素渲染尚待验收；不继承其他方法的游戏实测结论。
+
 只在新增、纠正或合并实现时读取本文件；日常使用从 [方法索引](SKILL.md#方法索引) 直接进入相关文档。
 
 项目名称、历史路径与来源对比只放在本指南的追溯记录中；SKILL.md、reference正文及代码直接描述API与行为。依赖工程框架的控制开关或调度状态不列为属性方法，也不逐项登记其名称。
